@@ -1,0 +1,50 @@
+executor:
+  number: 2
+  queue-name: worker
+  exchange-name: worker
+manager:
+  queue-name: manager
+  exchange-name: manager
+spring:
+  rabbitmq:
+    addresses: ${RABBITMQ_ADDRESSES}
+    password: ${RABBITMQ_PASSWORD}
+    username: ${RABBITMQ_USERNAME}
+    publisher-confirm-type: correlated
+    listener:
+      type: simple
+      simple:
+        acknowledge-mode: manual
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    url: ${SQL_DATABASE_ADDRESSES}
+    username: ${SQL_DATABASE_USER:Bumblebee}
+    password: ${SQL_DATABASE_PASSWORD:AllBeesLoveHoney}
+    hikari:
+      maximum-pool-size: 25
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    generate-ddl: false
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 10
+          fetch_size: 30
+        max_fetch_depth: 3
+        show_sql: true
+        format_sql: false
+        hbm2ddl:
+          auto: validate
+  docker:
+    compose:
+      lifecycleManagement: start-only
+      profiles:
+        active: develop
+      readiness:
+        timeout: 20s
+logging:
+  level:
+    com:
+      hashmanager:
+        hashmanager: debug
+    root: ${ROOT_LOGGING_LEVEL:info}

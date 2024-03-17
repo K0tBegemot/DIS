@@ -1,0 +1,22 @@
+executor:
+  number: 2
+  queue-name: worker
+  exchange-name: worker
+manager:
+  queue-name: manager
+  exchange-name: manager
+spring:
+  rabbitmq:
+    addresses: ${RABBITMQ_ADDRESSES}
+    password: ${RABBITMQ_PASSWORD}
+    username: ${RABBITMQ_USERNAME}
+    publisher-confirm-type: correlated
+    listener:
+      type: simple
+      simple:
+        acknowledge-mode: manual
+logging:
+  level:
+    com:
+      hashworker: debug
+    root: ${ROOT_LOGGING_LEVEL:info}

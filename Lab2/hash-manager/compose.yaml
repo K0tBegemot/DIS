@@ -1,0 +1,231 @@
+services:
+  hash-manager:
+    build:
+      context: .
+      args:
+        MAIN_BACKEND_PORT: ${MANAGER_PORT}
+        K0TBEGEM0T_TOKEN: ${K0TBEGEM0T_TOKEN}
+        K0TBEGEM0T_USERNAME: ${K0TBEGEM0T_USERNAME}
+    profiles: [production]
+    init: true
+    ports:
+      - '${MANAGER_EXTERNAL_PORT}:${MANAGER_PORT}'
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      ROOT_LOGGING_LEVEL: ${ROOT_LOGGING_LEVEL}
+      SQL_DATABASE_USER: ${POSTGRES_USER}
+      SQL_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES_GLOBAL}
+      SQL_DATABASE_ADDRESSES: ${POSTGRES_ADDRESSES_GLOBAL}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq-0
+      - rabbitmq-1
+      - rabbitmq-2
+      - postgres-0
+      - postgres-1
+      - postgres-2
+      - hash-worker-1
+      - hash-worker-2
+  hash-worker-1:
+    hostname: hash-worker-1
+    build:
+      context: ./../hash-worker
+      args:
+        K0TBEGEM0T_TOKEN: ${K0TBEGEM0T_TOKEN}
+        K0TBEGEM0T_USERNAME: ${K0TBEGEM0T_USERNAME}
+    profiles: [production, develop]
+    ports:
+      - '${WORKER_EXTERNAL_PORT_1}:${WORKER_PORT}'
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${WORKER_SPRING_PROFILES_ACTIVE}
+      ROOT_LOGGING_LEVEL: ${ROOT_LOGGING_LEVEL}
+      RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES_GLOBAL}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+    depends_on:
+      - rabbitmq-0
+      - rabbitmq-1
+      - rabbitmq-2
+  hash-worker-2:
+    hostname: hash-worker-2
+    build:
+      context: ./../hash-worker
+      args:
+        K0TBEGEM0T_TOKEN: ${K0TBEGEM0T_TOKEN}
+        K0TBEGEM0T_USERNAME: ${K0TBEGEM0T_USERNAME}
+    profiles: [ production, develop ]
+    ports:
+      - '${WORKER_EXTERNAL_PORT_2}:${WORKER_PORT}'
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${WORKER_SPRING_PROFILES_ACTIVE}
+      ROOT_LOGGING_LEVEL: ${ROOT_LOGGING_LEVEL}
+      RABBITMQ_ADDRESSES: ${RABBITMQ_ADDRESSES_GLOBAL}
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+    depends_on:
+      - rabbitmq-0
+      - rabbitmq-1
+      - rabbitmq-2
+  postgres-0:
+    container_name: postgres-0
+    image: docker.io/bitnami/postgresql-repmgr:15
+    init: true
+    profiles:
+      - production
+      - develop
+    ports:
+      - "6432:5432"
+    volumes:
+      - postgres-0-data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_DATABASE=${POSTGRES_DB}
+      - REPMGR_PASSWORD=repmgrpassword
+      - REPMGR_PRIMARY_HOST=postgres-0
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=postgres-0,pg-2:5432
+      - REPMGR_NODE_NAME=postgres-0
+      - REPMGR_NODE_NETWORK_NAME=postgres-0
+      - REPMGR_PORT_NUMBER=5432
+      - REPMGR_CONNECT_TIMEOUT=1
+      - REPMGR_RECONNECT_ATTEMPTS=2
+      - REPMGR_RECONNECT_INTERVAL=1
+      - REPMGR_MASTER_RESPONSE_TIMEOUT=5
+    restart: unless-stopped
+  postgres-1:
+    container_name: postgres-1
+    image: docker.io/bitnami/postgresql-repmgr:15
+    init: true
+    profiles:
+      - production
+      - develop
+    ports:
+      - "6433:5432"
+    volumes:
+      - postgres-1-data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_DATABASE=${POSTGRES_DB}
+      - REPMGR_PASSWORD=repmgrpassword
+      - REPMGR_PRIMARY_HOST=postgres-0
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=postgres-0,postgres-1:5432
+      - REPMGR_NODE_NAME=postgres-1
+      - REPMGR_NODE_NETWORK_NAME=postgres-1
+      - REPMGR_PORT_NUMBER=5432
+      - REPMGR_CONNECT_TIMEOUT=1
+      - REPMGR_RECONNECT_ATTEMPTS=2
+      - REPMGR_RECONNECT_INTERVAL=1
+      - REPMGR_MASTER_RESPONSE_TIMEOUT=5
+    restart: unless-stopped
+  postgres-2:
+    container_name: postgres-2
+    image: docker.io/bitnami/postgresql-repmgr:15
+    init: true
+    profiles:
+      - production
+      - develop
+    ports:
+      - "6434:5432"
+    volumes:
+      - postgres-2-data:/bitnami/postgresql
+    environment:
+      - POSTGRESQL_POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_USERNAME=${POSTGRES_USER}
+      - POSTGRESQL_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRESQL_DATABASE=${POSTGRES_DB}
+      - REPMGR_PASSWORD=repmgrpassword
+      - REPMGR_PRIMARY_HOST=postgres-0
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=postgres-0,postgres-1,postgres-2:5432
+      - REPMGR_NODE_NAME=postgres-2
+      - REPMGR_NODE_NETWORK_NAME=postgres-2
+      - REPMGR_PORT_NUMBER=5432
+      - REPMGR_CONNECT_TIMEOUT=1
+      - REPMGR_RECONNECT_ATTEMPTS=2
+      - REPMGR_RECONNECT_INTERVAL=1
+      - REPMGR_MASTER_RESPONSE_TIMEOUT=5
+    restart: unless-stopped
+  rabbitmq-0:
+    image: bitnami/rabbitmq:3.12-debian-12
+    init: true
+    hostname: rabbitmq-0
+    container_name: rabbitmq-0
+    environment:
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_NODE_TYPE: stats
+      RABBITMQ_NODE_NAME: rabbit@rabbitmq-0
+      RABBITMQ_ERL_COOKIE: s3cr3tc00ki3
+      RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS: true
+      RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: no
+      RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_none
+    profiles: [ develop, production ]
+    ports:
+      - '${RABBITMQ_0_EXTERNAL_PORT}:${RABBITMQ_0_PORT}'
+      - '15672:15672'
+    volumes:
+      - rabbitmq-0-data:/bitnami/rabbitmq/mnesia
+      - ./dev-config/rabbit-mq/rabbitmq.conf:/bitnami/rabbitmq/conf/custom.conf
+  rabbitmq-1:
+    image: bitnami/rabbitmq:3.12-debian-12
+    init: true
+    hostname: rabbitmq-1
+    container_name: rabbitmq-1
+    environment:
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_NODE_TYPE: queue-disc
+      RABBITMQ_NODE_NAME: rabbit@rabbitmq-1
+      RABBITMQ_ERL_COOKIE: s3cr3tc00ki3
+      RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS: true
+      RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: no
+      RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_none
+      RABBITMQ_CLUSTER_NODE_NAME: rabbit@rabbitmq-0
+    profiles: [ develop, production ]
+    ports:
+      - '${RABBITMQ_1_EXTERNAL_PORT}:${RABBITMQ_1_PORT}'
+    volumes:
+      - rabbitmq-1-data:/bitnami/rabbitmq/mnesia
+      - ./dev-config/rabbit-mq/rabbitmq.conf:/bitnami/rabbitmq/conf/custom.conf
+    depends_on:
+      - rabbitmq-0
+  rabbitmq-2:
+    image: bitnami/rabbitmq:3.12-debian-12
+    init: true
+    hostname: rabbitmq-2
+    container_name: rabbitmq-2
+    environment:
+      RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_NODE_TYPE: queue-disc
+      RABBITMQ_NODE_NAME: rabbit@rabbitmq-2
+      RABBITMQ_ERL_COOKIE: s3cr3tc00ki3
+      RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS: true
+      RABBITMQ_MANAGEMENT_SSL_FAIL_IF_NO_PEER_CERT: no
+      RABBITMQ_MANAGEMENT_SSL_VERIFY: verify_none
+      RABBITMQ_CLUSTER_NODE_NAME: rabbit@rabbitmq-0
+    profiles: [ develop, production ]
+    ports:
+      - '${RABBITMQ_2_EXTERNAL_PORT}:${RABBITMQ_2_PORT}'
+    volumes:
+      - rabbitmq-2-data:/bitnami/rabbitmq/mnesia
+      - ./dev-config/rabbit-mq/rabbitmq.conf:/bitnami/rabbitmq/conf/custom.conf
+    depends_on:
+      - rabbitmq-0
+volumes:
+  postgres-0-data:
+  postgres-1-data:
+  postgres-2-data:
+  rabbitmq-0-data:
+  rabbitmq-1-data:
+  rabbitmq-2-data:
